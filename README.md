@@ -2,10 +2,10 @@
 ## Kinectics Training on 1 GPU in 2 Days
 This is [Tensorflow]implementation of two stream network of action classification on [Kinetics-400](https://deepmind.com/research/open-source/open-source-datasets/kinetics/) dataset.
 We train two streams of networks independently on individual(or stacked) frames of RGB (appearence) and optical flow (flow) as inputs. 
-We modified this code based on the Pytorch version https://github.com/gurkirt/2D-kinectics
+We modified this code based on the [Pytorch version](https://github.com/gurkirt/2D-kinectics)
 <!-- ~~~## Kinectics Training on 1 GPU in 2 Days~~~ -->
-~~~This is [PyTorch](http://pytorch.org/) implementation of two stream network of action classification on [Kinetics](https://deepmind.com/research/open-source/open-source-datasets/kinetics/) dataset.
-We train two streams of networks independently on individual(or stacked) frames of RGB (appearence) and optical flow (flow) as inputs.~~~
+~~This is [PyTorch](http://pytorch.org/) implementation of two stream network of action classification on [Kinetics](https://deepmind.com/research/open-source/open-source-datasets/kinetics/) dataset.
+We train two streams of networks independently on individual(or stacked) frames of RGB (appearence) and optical flow (flow) as inputs.~~
 
 Objective of this repository to establish a two stream baseline and ease the training process on
 such a huge dataset.
