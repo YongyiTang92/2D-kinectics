@@ -23,6 +23,7 @@ def set_bn_eval(m):
 
 # model.apply(set_bn_eval)
 
+
 class AverageMeter(object):
     """Computes and stores the average and current value"""
     def __init__(self):
@@ -39,7 +40,6 @@ class AverageMeter(object):
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
-
 
 
 def accuracy(output, target, topk=(1,)):
