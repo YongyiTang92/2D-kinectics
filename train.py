@@ -12,7 +12,9 @@ Author: Gurkirt Singh
 """
 
 import argparse
-import os, socket, pdb
+import os
+import socket
+import pdb
 import time
 import numpy as np
 import torch
@@ -23,17 +25,17 @@ from models.model_init import initialise_model
 from data.kinetics import KINETICS
 from torch.optim.lr_scheduler import MultiStepLR
 from data import BaseTransform
-from utils import  accuracy, AverageMeter, save_checkpoint, get_mean_size
+from utils import accuracy, AverageMeter, save_checkpoint, get_mean_size
 
 np.random.seed(123)
 torch.manual_seed(123)
 torch.cuda.manual_seed_all(123)
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
-parser.add_argument('--dataset', metavar='NAME', default='kinetics',  help='path to dataset')
+parser.add_argument('--dataset', metavar='NAME', default='kinetics', help='path to dataset')
 parser.add_argument('--datasubset', metavar='NAME', default='600', help='path to dataset')
 parser.add_argument('--arch', '-a', metavar='ARCH', default='resnet50', help='model architectures ')
-## parameters for dataloader
+# parameters for dataloader
 parser.add_argument('--input', '-i', metavar='INPUT', default='rgb', help='input image type')
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N', help='number of data loading workers (default: 4)')
 parser.add_argument('--seq_len', default=1, type=int, metavar='N',
@@ -46,7 +48,7 @@ parser.add_argument('--max_iterations', default=400000, type=int, metavar='N',
                     help='number of total iterations to run')
 parser.add_argument('--start-iteration', default=0, type=int, metavar='N',
                     help='manual iterations number (useful on restarts)')
-## parameter for optimizer
+# parameter for optimizer
 parser.add_argument('-b', '--batch-size', default=100, type=int,
                     metavar='N', help='mini-batch size (default: 256)')
 parser.add_argument('--ngpu', default=1, type=int, metavar='N',
@@ -61,7 +63,7 @@ parser.add_argument('--step_values', default='200000,300000', type=str,
                     help='Change the lr @')
 parser.add_argument('--gamma', default=0.1, type=float,
                     help='Gamma update for SGD')
-## logging parameters
+# logging parameters
 parser.add_argument('--print-freq', '-p', default=20, type=int,
                     metavar='N', help='print frequency (default: 10)')
 parser.add_argument('--resume', default=False, type=bool, metavar='B',
@@ -69,21 +71,23 @@ parser.add_argument('--resume', default=False, type=bool, metavar='B',
 parser.add_argument('--visdom', default=False, type=bool, metavar='B',
                     help='weather to use visdom (default: True)')
 parser.add_argument('--global_models_dir', default='~/global-models/pytorch-imagenet',
-                    type = str, metavar='PATH', help='place where pre-trained models are ')
+                    type=str, metavar='PATH', help='place where pre-trained models are ')
 parser.add_argument('--pretrained', default=True, type=bool,
                     help='use pre-trained model default (True)')
-## directory
+# directory
 parser.add_argument('--root', default='/mnt/mars-delta/',
-                    type = str, metavar='PATH', help='place where datasets are present')
+                    type=str, metavar='PATH', help='place where datasets are present')
+
 
 def set_bn_eval(m):
     classname = m.__class__.__name__
     if classname.find('BatchNorm') != -1:
         m.eval()
 
+
 def main():
     val_step = 25000
-    val_steps = [25000,]
+    val_steps = [25000, ]
     train_step = 500
 
     args = parser.parse_args()
@@ -91,11 +95,11 @@ def main():
 
     args.stepvalues = [int(val) for val in args.step_values.split(',')]
 
-    exp_name = '{}-{}-{}-{}-sl{:02d}-g{:d}-fs{:d}-{}-{:06d}'.format(args.dataset,args.datasubset,
-                args.arch, args.input, args.seq_len, args.gap, args.frame_step, args.batch_size, int(args.lr * 1000000))
+    exp_name = '{}-{}-{}-{}-sl{:02d}-g{:d}-fs{:d}-{}-{:06d}'.format(args.dataset, args.datasubset,
+                                                                    args.arch, args.input, args.seq_len, args.gap, args.frame_step, args.batch_size, int(args.lr * 1000000))
 
     args.exp_name = exp_name
-    args.root += args.dataset+'/'
+    args.root += args.dataset + '/'
     model_save_dir = args.root + 'cache/' + exp_name
     if not os.path.isdir(model_save_dir):
         os.system('mkdir -p ' + model_save_dir)
@@ -106,7 +110,7 @@ def main():
     if args.visdom:
         import visdom
         viz = visdom.Visdom()
-        ports = {'mars':8097,'sun':8096}
+        ports = {'mars': 8097, 'sun': 8096}
         viz.port = ports[hostname]
         viz.env = exp_name
 
@@ -129,11 +133,11 @@ def main():
                 xlabel='Iteration',
                 ylabel='Accuracy',
                 title='Train & Val Accuracies',
-                legend=['trainTop3', 'valTop3', 'trainTop1','valTop1']
+                legend=['trainTop3', 'valTop3', 'trainTop1', 'valTop1']
             )
         )
 
-    ## load dataloading configs
+    # load dataloading configs
     input_size, means, stds = get_mean_size(args.arch)
     normalize = transforms.Normalize(mean=means,
                                      std=stds)
@@ -147,7 +151,7 @@ def main():
                                         ])
 
     if args.arch.find('vgg') > -1:
-        transform = BaseTransform(size=input_size,mean=means)
+        transform = BaseTransform(size=input_size, mean=means)
         val_transform = transform
         print('\n\ntransforms are going to be VGG type\n\n')
     subsets = ['train']
@@ -159,7 +163,7 @@ def main():
                              netname=args.arch,
                              datasubset=args.datasubset,
                              subsets=subsets,
-                             scale_size=int(input_size*1.1),
+                             scale_size=int(input_size * 1.1),
                              input_size=int(input_size),
                              exp_name=exp_name,
                              frame_step=args.frame_step,
@@ -181,19 +185,19 @@ def main():
                            dataset_name=args.dataset,
                            netname=args.arch,
                            datasubset=args.datasubset,
-                           subsets=['val',],
+                           subsets=['val', ],
                            exp_name=exp_name,
                            scale_size=int(input_size * 1.1),
                            input_size=int(input_size),
-                           frame_step=args.frame_step*4,
+                           frame_step=args.frame_step * 4,
                            seq_len=args.seq_len,
                            gap=args.gap
                            )
 
-    val_loader  = torch.utils.data.DataLoader(val_dataset,
-                                              batch_size=args.batch_size, shuffle=False,
-                                              num_workers=args.workers, pin_memory=True
-                                              )
+    val_loader = torch.utils.data.DataLoader(val_dataset,
+                                             batch_size=args.batch_size, shuffle=False,
+                                             num_workers=args.workers, pin_memory=True
+                                             )
 
     model, criterion = initialise_model(args)
 
@@ -201,10 +205,9 @@ def main():
     params = []
     for name, param in parameter_dict.items():
         if name.find('bias') > -1:
-            params += [{'params': [param], 'lr': args.lr*2, 'weight_decay': 0}]
+            params += [{'params': [param], 'lr': args.lr * 2, 'weight_decay': 0}]
         else:
             params += [{'params': [param], 'lr': args.lr, 'weight_decay':args.weight_decay}]
-
 
     optimizer = torch.optim.SGD(params, args.lr, momentum=args.momentum)
     scheduler = MultiStepLR(optimizer, milestones=args.stepvalues, gamma=args.gamma)
@@ -217,7 +220,7 @@ def main():
         model.load_state_dict(torch.load(latest_dict['model_file_name']))
         optimizer.load_state_dict(torch.load(latest_dict['optimizer_file_name']))
         log_fid = open(args.model_save_dir + '/training.log', 'a')
-        args.iteration = latest_dict['iteration']-1
+        args.iteration = latest_dict['iteration'] - 1
         for _ in range(args.iteration):
             scheduler.step()
     else:
@@ -239,7 +242,7 @@ def main():
     top1 = AverageMeter()
     top3 = AverageMeter()
     iteration = args.start_iteration
-    approx_epochs = np.ceil(float(args.max_iterations-iteration)/len(train_loader))
+    approx_epochs = np.ceil(float(args.max_iterations - iteration) / len(train_loader))
 
     print('Approx Epochs to RUN: {}, Start Ietration {} Max iterations {} # of samples in dataset {}'.format(
         approx_epochs, iteration, args.max_iterations, len(train_loader)))
@@ -254,12 +257,12 @@ def main():
     start = time.perf_counter()
     while iteration < args.max_iterations:
         epoch += 1
-        for i, (batch, targets, __ , __) in enumerate(train_loader):
-            if i<len(train_loader):
+        for i, (batch, targets, __, __) in enumerate(train_loader):
+            if i < len(train_loader):
                 if iteration > args.max_iterations:
                     break
                 iteration += 1
-                #pdb.set_trace()
+                # pdb.set_trace()
                 #print('input size ',batch.size())
                 targets = targets.cuda(async=True)
                 input_var = torch.autograd.Variable(batch.cuda(async=True))
@@ -271,7 +274,7 @@ def main():
                 # compute output
                 output = model(input_var)
                 loss = criterion(output, target_var)
-                #pdb.set_trace()
+                # pdb.set_trace()
                 # measure accuracy and record loss
                 prec1, prec3 = accuracy(output.data, targets, topk=(1, 3))
                 losses.update(loss.data[0], batch.size(0))
@@ -291,10 +294,9 @@ def main():
                     line = 'Epoch: [{0}][{1}/{2}] Time {batch_time.val:.3f} ({batch_time.avg:.3f}) Data {data_time.val:.3f} ({data_time.avg:.3f})'.format(
                            epoch, iteration, len(train_loader), batch_time=batch_time, data_time=data_time)
                     line += 'Loss {loss.val:.4f} ({loss.avg:.4f}) Prec@1 {top1.val:.3f} ({top1.avg:.3f}) Prec@3 {top3.val:.3f} ({top3.avg:.3f})'.format(
-                                loss=losses, top1=top1, top3=top3)
+                        loss=losses, top1=top1, top3=top3)
                     print(line)
-                    log_fid.write(line+'\n')
-
+                    log_fid.write(line + '\n')
 
                 avgtop1 = top1.avg
                 avgtop3 = top3.avg
@@ -303,14 +305,14 @@ def main():
                     # evaluate on validation set
                     val_top1, val_top3, val_loss = validate(args, val_loader, model, criterion)
                     line = '\n\nValidation @ {:d}: Top1 {:.2f} Top3 {:.2f} Loss {:.3f}\n\n'.format(
-                                iteration, val_top1, val_top3, val_loss)
+                        iteration, val_top1, val_top3, val_loss)
                     print(line)
                     log_fid.write(line)
                     # remember best prec@1 and save checkpoint
                     is_best = val_top1 > best_top1
                     best_top1 = max(val_top1, best_top1)
                     torch.cuda.synchronize()
-                    line = '\nBest Top1 sofar {:.3f} current top1 {:.3f} Time taken for Validation {:0.3f}\n\n'.format(best_top1, val_top1, time.perf_counter()-start)
+                    line = '\nBest Top1 sofar {:.3f} current top1 {:.3f} Time taken for Validation {:0.3f}\n\n'.format(best_top1, val_top1, time.perf_counter() - start)
                     log_fid.write(line + '\n')
                     print(line)
                     save_checkpoint({
@@ -324,7 +326,7 @@ def main():
                         'train_top3': avgtop3,
                         'train_loss': avgloss,
                         'state_dict': model.state_dict(),
-                        'optimizer' : optimizer.state_dict(),
+                        'optimizer': optimizer.state_dict(),
                     }, is_best, args.model_save_dir)
                     if args.visdom:
                         viz.line(
@@ -374,7 +376,7 @@ def validate(args, val_loader, model, criterion):
     torch.cuda.synchronize()
     end = time.perf_counter()
 
-    for itr, (batch, targets,  __ , __) in enumerate(val_loader):
+    for itr, (batch, targets, __, __) in enumerate(val_loader):
         if itr < len(val_loader):
             #print('input size ', batch.size())
 
@@ -385,7 +387,7 @@ def validate(args, val_loader, model, criterion):
             # compute output
             output = model(input_var)
             loss = criterion(output, target_var)
-            #pdb.set_trace()
+            # pdb.set_trace()
             # measure accuracy and record lossargs.ex
             prec1, prec3 = accuracy(output.data, targets, topk=(1, 3))
             losses.update(loss.data[0], batch.size(0))
@@ -397,14 +399,14 @@ def validate(args, val_loader, model, criterion):
             batch_time.update(time.perf_counter() - end)
             end = time.perf_counter()
 
-            if itr % args.print_freq*10 == 0:
+            if itr % args.print_freq * 10 == 0:
                 print('Test:  [{0}/{1}] '
                       'Time {batch_time.val:.3f} ({batch_time.avg:.3f}) '
                       'Loss {loss.val:.4f} ({loss.avg:.4f}) '
                       'Prec@1 {top1.val:.3f} ({top1.avg:.3f}) '
                       'Prec@3 {top3.val:.3f} ({top3.avg:.3f}) '.format(
-                       itr, len(val_loader), batch_time=batch_time, loss=losses,
-                       top1=top1, top3=top3))
+                          itr, len(val_loader), batch_time=batch_time, loss=losses,
+                          top1=top1, top3=top3))
 
     print(' * Prec@1 {top1.avg:.3f} Prec@3 {top3.avg:.3f}'
           .format(top1=top1, top3=top3))
